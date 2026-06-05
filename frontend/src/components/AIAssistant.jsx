@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Shield, Send } from 'lucide-react'
+import { Shield, Send, Bot } from 'lucide-react'
 import { getAIResponse } from '../data/mockData'
 
 const SUGGESTIONS = [
@@ -351,10 +351,7 @@ Directives importantes :
           
           {/* Bouton principal */}
           <span className="relative flex items-center justify-center w-14 h-14 rounded-full bg-[#1A73E8] shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-200">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2a8 8 0 0 1 8 8c0 5.25-8 13-8 13S4 15.25 4 10a8 8 0 0 1 8-8z" />
-              <circle cx="12" cy="10" r="3" fill="white" stroke="none" />
-            </svg>
+            <Bot size={26} color="white" />
           </span>
 
           {/* Tooltip */}
