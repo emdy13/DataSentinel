@@ -84,8 +84,8 @@ export default function Login({ onLogin }) {
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#1A73E8] to-[#1E8E3E] flex items-center justify-center shadow-md shadow-[#1A73E8]/10">
             <Shield size={20} color="white" strokeWidth={2.5} />
           </div>
-          <span className="text-xl font-bold tracking-tight text-slate-900">
-            Data<span className="text-[#1A73E8]">Sentinel</span>
+          <span className="text-xl font-bold tracking-tight text-[#0D47A1]">
+            DataSentinel
           </span>
         </div>
 
@@ -97,13 +97,10 @@ export default function Login({ onLogin }) {
               Sénégal · Cybersécurité & Conformité
             </span>
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-slate-900">
-              Protégez vos données. <br />
-              <span className="bg-gradient-to-r from-[#1A73E8] via-[#0D47A1] to-[#1E8E3E] bg-clip-text text-transparent">
-                Sécurisez votre Sénégal numérique.
-              </span>
+              Plateforme d'audit et de conformité des données personnelles.
             </h1>
             <p className="text-slate-600 text-sm md:text-base max-w-lg leading-relaxed">
-              La solution d'audit automatisée pour l'identification des données personnelles exposées, l'atténuation des menaces et la mise en conformité réglementaire CDP.
+              La solution d'audit automatisée pour l'identification des données personnelles exposées (PII), l'atténuation des menaces et la conformité vis-à-vis de la CDP.
             </p>
           </div>
 
@@ -243,9 +240,11 @@ export default function Login({ onLogin }) {
             </form>
           </div>
 
-          <p className="text-[11px] text-slate-400 text-center">
-            Accès réservé aux auditeurs académiques et aux membres de la Commission de Protection des Données Personnelles du Sénégal (CDP).
-          </p>
+          <div className="bg-slate-100 border border-slate-200/60 rounded-xl p-4 text-xs text-slate-600 space-y-1.5 leading-relaxed">
+            <p className="font-bold text-slate-800">Modèle commercial :</p>
+            <p>DataSentinel est disponible sous forme d'abonnement SaaS flexible ou de déploiement sur site (On-Premise) pour les entreprises.</p>
+            <p className="text-[10px] text-slate-500">Version d'évaluation gratuite disponible pour l'analyse initiale de vos fichiers (PII).</p>
+          </div>
 
         </div>
       </div>

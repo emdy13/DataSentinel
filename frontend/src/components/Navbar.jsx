@@ -23,7 +23,7 @@ export default function Navbar({ activeTab, setActiveTab, activeAlerts = [], onR
       <div className="flex items-center gap-2 flex-shrink-0">
         <Shield size={22} color="#1A73E8" strokeWidth={2.5} />
         <span className="text-lg font-semibold text-[#0D47A1] tracking-tight">
-          Data<span className="text-[#1A73E8]">Sentinel</span>
+          DataSentinel
         </span>
       </div>
 
