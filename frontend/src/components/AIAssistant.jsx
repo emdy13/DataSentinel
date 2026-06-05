@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Shield, Send, Dot } from 'lucide-react'
+import { Shield, Send, Maximize2, Minimize2 } from 'lucide-react'
 import { getAIResponse } from '../data/mockData'
 
 const SUGGESTIONS = [
@@ -31,7 +31,7 @@ function FormattedText({ text }) {
   )
 }
 
-/** Sidebar chatbot IA toujours visible */
+/** Sidebar chatbot IA avec option demi-plein écran (style Claude/ChatGPT) et effet de frappe progressif */
 export default function AIAssistant({ triggerMessage }) {
   const [messages, setMessages] = useState([
     {
@@ -43,7 +43,9 @@ export default function AIAssistant({ triggerMessage }) {
   ])
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
   const bottomRef = useRef()
+  const intervalRef = useRef()
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -54,6 +56,43 @@ export default function AIAssistant({ triggerMessage }) {
       sendMessage(triggerMessage)
     }
   }, [triggerMessage])
+
+  // Nettoyage de l'intervalle d'effet de frappe si le composant s'unmount
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [])
+
+  // Fonction pour afficher progressivement le texte mot par mot
+  function streamText(aiText) {
+    const aiMsgId = Date.now() + 1
+    
+    // Initialise le message de l'IA à vide
+    setMessages(prev => [...prev, {
+      id: aiMsgId,
+      role: 'ai',
+      text: '',
+      time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+    }])
+    setThinking(false)
+
+    const words = aiText.split(' ')
+    let currentText = ''
+    let wordIndex = 0
+
+    if (intervalRef.current) clearInterval(intervalRef.current)
+
+    intervalRef.current = setInterval(() => {
+      if (wordIndex < words.length) {
+        currentText += (wordIndex === 0 ? '' : ' ') + words[wordIndex]
+        setMessages(prev => prev.map(m => m.id === aiMsgId ? { ...m, text: currentText } : m))
+        wordIndex++
+      } else {
+        clearInterval(intervalRef.current)
+      }
+    }, 25) // 25ms par mot pour une écriture fluide et dynamique
+  }
 
   async function sendMessage(text) {
     if (!text.trim() || thinking) return
@@ -110,50 +149,44 @@ Directives importantes :
 
       const data = await response.json();
       const aiText = data.choices[0].message.content;
-
-      const aiMsg = {
-        id: Date.now() + 1,
-        role: 'ai',
-        text: aiText,
-        time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-      }
-      setMessages(prev => [...prev, aiMsg])
+      streamText(aiText)
     } catch (error) {
       console.warn('Fallback sur les réponses simulées de DataSentinel suite à une erreur :', error);
-      const aiMsg = {
-        id: Date.now() + 1,
-        role: 'ai',
-        text: getAIResponse(text),
-        time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-      }
-      setMessages(prev => [...prev, aiMsg])
-    } finally {
-      setThinking(false)
+      streamText(getAIResponse(text))
     }
   }
 
-  return (
-    <aside className="w-80 flex-shrink-0 bg-white border-l border-[#DADCE0] flex flex-col h-full" style={{ minHeight: 0 }}>
-
+  // Rendu de l'ossature interne du chat (partagé entre mode barre et mode plein écran)
+  const renderChatContent = () => (
+    <>
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-[#DADCE0]">
         <Shield size={16} color="#1A73E8" />
         <span className="text-sm font-semibold text-[#202124]">Assistant DataSentinel</span>
-        <div className="ml-auto flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-[#1E8E3E]" />
-          <span className="text-xs text-[#1E8E3E]">En ligne</span>
+        <div className="ml-auto flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-[#1E8E3E]" />
+            <span className="text-xs text-[#1E8E3E]">En ligne</span>
+          </div>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-1 rounded text-[#5F6368] hover:bg-[#F1F3F4] hover:text-[#202124] transition-colors flex items-center justify-center"
+            title={isExpanded ? "Réduire au volet latéral" : "Agrandir en mode discussion"}
+          >
+            {isExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+          </button>
         </div>
       </div>
 
       {/* Suggested questions */}
-      <div className="px-3 py-3 border-b border-[#F1F3F4]">
+      <div className="px-3 py-3 border-b border-[#F1F3F4] bg-[#F8F9FA]">
         <p className="text-xs text-[#5F6368] mb-2 font-medium">Questions suggérées</p>
         <div className="flex flex-wrap gap-1.5">
           {SUGGESTIONS.map((s, i) => (
             <button
               key={i}
               onClick={() => sendMessage(s)}
-              className="text-xs px-2.5 py-1 rounded border border-[#DADCE0] text-[#1A73E8] hover:bg-[#E8F0FE] hover:border-[#1A73E8] transition-colors"
+              className="text-xs px-2.5 py-1 rounded border border-[#DADCE0] text-[#1A73E8] bg-white hover:bg-[#E8F0FE] hover:border-[#1A73E8] transition-colors"
             >
               {s}
             </button>
@@ -162,12 +195,12 @@ Directives importantes :
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3" style={{ minHeight: 0 }}>
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-white" style={{ minHeight: 0 }}>
         {messages.map(msg => (
           <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className="max-w-[85%]">
               <div
-                className="rounded-lg px-3 py-2"
+                className="rounded-lg px-3.5 py-2.5 shadow-xs"
                 style={msg.role === 'user'
                   ? { backgroundColor: '#1A73E8', color: '#fff' }
                   : { backgroundColor: '#F1F3F4', color: '#202124' }
@@ -197,7 +230,7 @@ Directives importantes :
       </div>
 
       {/* Input */}
-      <div className="px-3 py-3 border-t border-[#DADCE0]">
+      <div className="px-3 py-3 border-t border-[#DADCE0] bg-[#F8F9FA]">
         <div className="flex gap-2">
           <input
             type="text"
@@ -205,12 +238,12 @@ Directives importantes :
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && sendMessage(input)}
             placeholder="Posez votre question..."
-            className="flex-1 text-xs px-3 py-2 rounded border border-[#DADCE0] focus:outline-none focus:border-[#1A73E8] bg-white text-[#202124]"
+            className="flex-1 text-xs px-3 py-2.5 rounded border border-[#DADCE0] focus:outline-none focus:border-[#1A73E8] bg-white text-[#202124]"
           />
           <button
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || thinking}
-            className="p-2 rounded transition-colors flex-shrink-0"
+            className="p-2.5 rounded transition-colors flex-shrink-0 flex items-center justify-center"
             style={{
               backgroundColor: input.trim() && !thinking ? '#1A73E8' : '#DADCE0',
               color: 'white',
@@ -220,6 +253,27 @@ Directives importantes :
           </button>
         </div>
       </div>
+    </>
+  )
+
+  if (isExpanded) {
+    return (
+      <div className="fixed inset-0 z-50 bg-[#202124]/50 backdrop-blur-xs flex items-center justify-center p-4">
+        {/* Click sur le fond pour réduire */}
+        <div className="absolute inset-0" onClick={() => setIsExpanded(false)} />
+        
+        {/* Conteneur de discussion au milieu de la page (style Claude) */}
+        <div className="relative w-full max-w-4xl h-[85vh] bg-white rounded-xl shadow-2xl border border-[#DADCE0] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          {renderChatContent()}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <aside className="w-80 flex-shrink-0 bg-white border-l border-[#DADCE0] flex flex-col h-full" style={{ minHeight: 0 }}>
+      {renderChatContent()}
     </aside>
   )
 }
+
