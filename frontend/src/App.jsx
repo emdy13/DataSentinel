@@ -10,6 +10,7 @@ import CDPReport from './components/CDPReport'
 import Timeline from './components/Timeline'
 import DemoMode from './components/DemoMode'
 import AIAssistant from './components/AIAssistant'
+import Login from './components/Login'
 import { generatePDFReport } from './utils/pdfReport'
 import { computeRiskScore, riskLevel } from './utils/fileAnalyzer'
 import { DOCUMENTS, RECENT_ALERTS, MOCK_CVE_DATABASE, MOCK_DARK_WEB_ALERTS } from './data/mockData'
@@ -17,6 +18,34 @@ import { DOCUMENTS, RECENT_ALERTS, MOCK_CVE_DATABASE, MOCK_DARK_WEB_ALERTS } fro
 /** Composant racine de DataSentinel */
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard')
+
+  // État d'authentification de l'utilisateur
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('datasentinel_user')
+      return savedUser ? JSON.parse(savedUser) : null
+    } catch {
+      return null
+    }
+  })
+
+  const handleLogin = (userData) => {
+    setUser(userData)
+    try {
+      localStorage.setItem('datasentinel_user', JSON.stringify(userData))
+    } catch (e) {
+      console.warn('LocalStorage non disponible :', e)
+    }
+  }
+
+  const handleLogout = () => {
+    setUser(null)
+    try {
+      localStorage.removeItem('datasentinel_user')
+    } catch (e) {
+      console.warn('LocalStorage non disponible :', e)
+    }
+  }
 
   // États partagés globaux
   const [docs, setDocs] = useState(DOCUMENTS)
@@ -508,6 +537,10 @@ export default function App() {
     }
   }
 
+  if (!user) {
+    return <Login onLogin={handleLogin} />
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFF]">
       <Navbar
@@ -516,15 +549,17 @@ export default function App() {
         activeAlerts={unifiedAlerts.filter(a => !resolvedAlerts.includes(a.id))}
         onResolveAlert={handleResolveUnifiedAlert}
         onStartDemoMode={() => setIsDemoOpen(true)}
+        user={user}
+        onLogout={handleLogout}
       />
       <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>
         {/* Main content */}
         <main className="flex-1 overflow-y-auto">
           {renderContent()}
         </main>
-        {/* AI Sidebar */}
-        <AIAssistant triggerMessage={triggerMessage} />
       </div>
+      {/* AI Chatbot flottant */}
+      <AIAssistant triggerMessage={triggerMessage} />
 
       {/* Mode Démo Guidé Overlay */}
       <DemoMode

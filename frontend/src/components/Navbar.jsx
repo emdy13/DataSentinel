@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Shield, Bell, LayoutDashboard, FileText, Database, History, ShieldAlert, Crosshair, Radar, Scale, Check, HelpCircle } from 'lucide-react'
+import { Shield, Bell, LayoutDashboard, FileText, Database, History, ShieldAlert, Crosshair, Radar, Scale, Check, HelpCircle, LogOut } from 'lucide-react'
 
 /** Barre de navigation principale avec onglets */
-export default function Navbar({ activeTab, setActiveTab, activeAlerts = [], onResolveAlert, onStartDemoMode }) {
+export default function Navbar({ activeTab, setActiveTab, activeAlerts = [], onResolveAlert, onStartDemoMode, user, onLogout }) {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
   const tabs = [
     { id: 'dashboard',    label: 'Tableau de bord',       icon: LayoutDashboard },
     { id: 'upload',       label: 'Documents',             icon: FileText },
@@ -123,8 +124,47 @@ export default function Navbar({ activeTab, setActiveTab, activeAlerts = [], onR
             </>
           )}
         </div>
-        <div className="w-8 h-8 rounded-full bg-[#1A73E8] flex items-center justify-center">
-          <span className="text-white text-xs font-semibold">PM</span>
+        {/* Menu Profil / Déconnexion */}
+        <div className="relative">
+          <button
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+            className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#1A73E8] to-[#1E8E3E] hover:from-[#0D47A1] hover:to-[#1E8E3E] text-white flex items-center justify-center font-bold text-xs shadow-sm shadow-[#1A73E8]/20 transition-all select-none border border-white/10 hover:scale-105 active:scale-95"
+            title="Mon profil"
+          >
+            {user?.avatarInitials || 'PM'}
+          </button>
+
+          {isProfileOpen && (
+            <>
+              {/* Clic dehors pour fermer */}
+              <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)} />
+              
+              <div className="absolute right-0 mt-2.5 w-64 bg-white border border-[#DADCE0] rounded-xl shadow-xl z-50 overflow-hidden text-slate-800">
+                {/* En-tête profil */}
+                <div className="p-4 border-b border-[#F1F3F4] bg-[#F8FAFF]">
+                  <p className="font-bold text-sm text-slate-800 leading-tight">{user?.name || 'Utilisateur'}</p>
+                  <p className="text-xs text-slate-500 truncate mt-0.5">{user?.email}</p>
+                  <span className="inline-block px-2 py-0.5 mt-2 bg-[#E8F0FE] text-[#1A73E8] text-[9px] font-bold rounded">
+                    {user?.role || 'Auditeur'}
+                  </span>
+                </div>
+
+                {/* Actions */}
+                <div className="p-1.5">
+                  <button
+                    onClick={() => {
+                      setIsProfileOpen(false)
+                      onLogout()
+                    }}
+                    className="w-full text-left flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <LogOut size={13} />
+                    Se déconnecter
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </header>

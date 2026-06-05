@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Shield, Send, Maximize2, Minimize2 } from 'lucide-react'
+import { Shield, Send } from 'lucide-react'
 import { getAIResponse } from '../data/mockData'
 
 const SUGGESTIONS = [
@@ -10,20 +10,74 @@ const SUGGESTIONS = [
   'Quels sont mes NINEA exposés ?',
 ]
 
-/** Formate les réponses avec markdown basique (gras, listes) */
+/** Formate les réponses avec du markdown basique (gras, italique, listes à puces et ordonnées) */
 function FormattedText({ text }) {
   const lines = text.split('\n')
+  
   return (
-    <div className="space-y-1">
-      {lines.map((line, i) => {
-        if (!line.trim()) return null
-        // Bold with **
-        const parts = line.split(/\*\*(.*?)\*\*/g)
+    <div className="space-y-1.5">
+      {lines.map((line, index) => {
+        let trimmed = line.trim()
+        if (!trimmed) return <div key={index} className="h-1" />
+
+        // Détection des listes à puces (- ou * ou • suivis d'un espace)
+        const isBullet = trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ')
+        if (isBullet) {
+          trimmed = trimmed.replace(/^[-*•]\s+/, '')
+        }
+
+        // Détection des listes ordonnées (ex: 1. ou 2. suivis d'un espace)
+        const isNumbered = /^\d+\.\s+/.test(trimmed)
+        let numberPrefix = ''
+        if (isNumbered) {
+          numberPrefix = trimmed.match(/^\d+\.\s+/)[0]
+          trimmed = trimmed.substring(numberPrefix.length)
+        }
+
+        // Parseur interne pour le gras et l'italique
+        const parseFormatting = (str) => {
+          const boldParts = str.split(/\*\*(.*?)\*\*/g)
+          return boldParts.map((part, i) => {
+            if (i % 2 === 1) {
+              return <strong key={i} className="font-bold text-[#202124]">{parseItalic(part)}</strong>
+            }
+            return parseItalic(part)
+          })
+        }
+
+        const parseItalic = (str) => {
+          const italicParts = str.split(/\*(.*?)\*/g)
+          return italicParts.map((part, i) => {
+            if (i % 2 === 1) {
+              return <em key={i} className="italic text-[#1A73E8] font-medium">{part}</em>
+            }
+            return part
+          })
+        }
+
+        const parsedContent = parseFormatting(trimmed)
+
+        if (isBullet) {
+          return (
+            <div key={index} className="flex items-start gap-1.5 pl-1.5">
+              <span className="text-[#1A73E8] text-xs leading-none select-none mt-1.5">•</span>
+              <p className="text-xs leading-relaxed text-[#202124] flex-1">{parsedContent}</p>
+            </div>
+          )
+        }
+
+        if (isNumbered) {
+          return (
+            <div key={index} className="flex items-start gap-1.5 pl-1.5">
+              <span className="text-[#1A73E8] font-bold text-xs leading-relaxed select-none">{numberPrefix}</span>
+              <p className="text-xs leading-relaxed text-[#202124] flex-1">{parsedContent}</p>
+            </div>
+          )
+        }
+
         return (
-          <p key={i} className="text-xs leading-relaxed">
-            {parts.map((part, j) =>
-              j % 2 === 1 ? <strong key={j}>{part}</strong> : part
-            )}
+          <p key={index} className="text-xs leading-relaxed text-[#202124]">
+            {parsedContent}
           </p>
         )
       })}
@@ -53,6 +107,7 @@ export default function AIAssistant({ triggerMessage }) {
 
   useEffect(() => {
     if (triggerMessage) {
+      setIsExpanded(true)
       sendMessage(triggerMessage)
     }
   }, [triggerMessage])
@@ -156,37 +211,42 @@ Directives importantes :
     }
   }
 
-  // Rendu de l'ossature interne du chat (partagé entre mode barre et mode plein écran)
+
+  // Rendu du contenu interne du chat (plein écran uniquement)
   const renderChatContent = () => (
     <>
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-[#DADCE0]">
-        <Shield size={16} color="#1A73E8" />
-        <span className="text-sm font-semibold text-[#202124]">Assistant DataSentinel</span>
-        <div className="ml-auto flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-[#1E8E3E]" />
-            <span className="text-xs text-[#1E8E3E]">En ligne</span>
-          </div>
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1 rounded text-[#5F6368] hover:bg-[#F1F3F4] hover:text-[#202124] transition-colors flex items-center justify-center"
-            title={isExpanded ? "Réduire au volet latéral" : "Agrandir en mode discussion"}
-          >
-            {isExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-          </button>
+      <div className="flex items-center gap-2 px-5 py-4 border-b border-[#DADCE0]">
+        <div className="w-8 h-8 rounded-full bg-[#1A73E8] flex items-center justify-center">
+          <Shield size={16} color="white" />
         </div>
+        <div>
+          <p className="text-sm font-semibold text-[#202124]">Assistant DataSentinel</p>
+          <p className="text-[10px] text-[#1E8E3E] flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#1E8E3E] inline-block" />
+            En ligne · Llama 3.1 via Groq
+          </p>
+        </div>
+        <button
+          onClick={() => setIsExpanded(false)}
+          className="ml-auto p-2 rounded-lg text-[#5F6368] hover:bg-[#F1F3F4] hover:text-[#202124] transition-colors"
+          title="Fermer l'assistant"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
       </div>
 
       {/* Suggested questions */}
-      <div className="px-3 py-3 border-b border-[#F1F3F4] bg-[#F8F9FA]">
-        <p className="text-xs text-[#5F6368] mb-2 font-medium">Questions suggérées</p>
+      <div className="px-4 py-3 border-b border-[#F1F3F4] bg-[#F8F9FA]">
+        <p className="text-[11px] text-[#5F6368] mb-2 font-medium uppercase tracking-wide">Questions suggérées</p>
         <div className="flex flex-wrap gap-1.5">
           {SUGGESTIONS.map((s, i) => (
             <button
               key={i}
               onClick={() => sendMessage(s)}
-              className="text-xs px-2.5 py-1 rounded border border-[#DADCE0] text-[#1A73E8] bg-white hover:bg-[#E8F0FE] hover:border-[#1A73E8] transition-colors"
+              className="text-xs px-2.5 py-1.5 rounded-full border border-[#DADCE0] text-[#1A73E8] bg-white hover:bg-[#E8F0FE] hover:border-[#1A73E8] transition-colors"
             >
               {s}
             </button>
@@ -195,20 +255,25 @@ Directives importantes :
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-white" style={{ minHeight: 0 }}>
+      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 bg-white" style={{ minHeight: 0 }}>
         {messages.map(msg => (
-          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className="max-w-[85%]">
+          <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            {msg.role === 'ai' && (
+              <div className="w-7 h-7 rounded-full bg-[#1A73E8] flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Shield size={13} color="white" />
+              </div>
+            )}
+            <div className="max-w-[75%]">
               <div
-                className="rounded-lg px-3.5 py-2.5 shadow-xs"
+                className="rounded-2xl px-4 py-3"
                 style={msg.role === 'user'
-                  ? { backgroundColor: '#1A73E8', color: '#fff' }
-                  : { backgroundColor: '#F1F3F4', color: '#202124' }
+                  ? { backgroundColor: '#1A73E8', color: '#fff', borderBottomRightRadius: '4px' }
+                  : { backgroundColor: '#F1F3F4', color: '#202124', borderBottomLeftRadius: '4px' }
                 }
               >
                 {msg.role === 'ai'
                   ? <FormattedText text={msg.text} />
-                  : <p className="text-xs">{msg.text}</p>
+                  : <p className="text-sm">{msg.text}</p>
                 }
               </div>
               <p className="text-[10px] text-[#9AA0A6] mt-1 px-1">{msg.time}</p>
@@ -216,12 +281,15 @@ Directives importantes :
           </div>
         ))}
         {thinking && (
-          <div className="flex justify-start">
-            <div className="rounded-lg px-3 py-2" style={{ backgroundColor: '#F1F3F4' }}>
-              <div className="flex items-center gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#9AA0A6] animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-1.5 h-1.5 rounded-full bg-[#9AA0A6] animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-1.5 h-1.5 rounded-full bg-[#9AA0A6] animate-bounce" style={{ animationDelay: '300ms' }} />
+          <div className="flex justify-start gap-3">
+            <div className="w-7 h-7 rounded-full bg-[#1A73E8] flex items-center justify-center flex-shrink-0">
+              <Shield size={13} color="white" />
+            </div>
+            <div className="rounded-2xl px-4 py-3" style={{ backgroundColor: '#F1F3F4', borderBottomLeftRadius: '4px' }}>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-[#9AA0A6] animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 rounded-full bg-[#9AA0A6] animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 rounded-full bg-[#9AA0A6] animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
@@ -230,50 +298,98 @@ Directives importantes :
       </div>
 
       {/* Input */}
-      <div className="px-3 py-3 border-t border-[#DADCE0] bg-[#F8F9FA]">
-        <div className="flex gap-2">
-          <input
-            type="text"
+      <div className="px-4 py-4 border-t border-[#DADCE0] bg-[#F8F9FA]">
+        <div className="flex gap-2 items-end bg-white border border-[#DADCE0] rounded-xl px-3 py-2 focus-within:border-[#1A73E8] transition-colors">
+          <textarea
+            rows={1}
             value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && sendMessage(input)}
-            placeholder="Posez votre question..."
-            className="flex-1 text-xs px-3 py-2.5 rounded border border-[#DADCE0] focus:outline-none focus:border-[#1A73E8] bg-white text-[#202124]"
+            onChange={e => {
+              setInput(e.target.value)
+              e.target.style.height = 'auto'
+              e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                sendMessage(input)
+              }
+            }}
+            placeholder="Posez votre question… (Entrée pour envoyer)"
+            className="flex-1 text-sm resize-none outline-none bg-transparent text-[#202124] placeholder-[#9AA0A6] leading-relaxed"
+            style={{ minHeight: '24px', maxHeight: '120px' }}
           />
           <button
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || thinking}
-            className="p-2.5 rounded transition-colors flex-shrink-0 flex items-center justify-center"
+            className="p-2 rounded-lg transition-all flex-shrink-0 flex items-center justify-center"
             style={{
-              backgroundColor: input.trim() && !thinking ? '#1A73E8' : '#DADCE0',
-              color: 'white',
+              backgroundColor: input.trim() && !thinking ? '#1A73E8' : '#E8EAED',
+              color: input.trim() && !thinking ? 'white' : '#9AA0A6',
             }}
           >
-            <Send size={14} />
+            <Send size={15} />
           </button>
         </div>
+        <p className="text-[10px] text-[#9AA0A6] text-center mt-2">Maj+Entrée pour aller à la ligne</p>
       </div>
     </>
   )
 
-  if (isExpanded) {
-    return (
-      <div className="fixed inset-0 z-50 bg-[#202124]/50 backdrop-blur-xs flex items-center justify-center p-4">
-        {/* Click sur le fond pour réduire */}
-        <div className="absolute inset-0" onClick={() => setIsExpanded(false)} />
-        
-        {/* Conteneur de discussion au milieu de la page (style Claude) */}
-        <div className="relative w-full max-w-4xl h-[85vh] bg-white rounded-xl shadow-2xl border border-[#DADCE0] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-          {renderChatContent()}
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <aside className="w-80 flex-shrink-0 bg-white border-l border-[#DADCE0] flex flex-col h-full" style={{ minHeight: 0 }}>
-      {renderChatContent()}
-    </aside>
+    <>
+      {/* Bouton flottant animé (FAB) */}
+      {!isExpanded && (
+        <button
+          onClick={() => setIsExpanded(true)}
+          className="fixed bottom-6 right-6 z-40 group"
+          title="Ouvrir l'assistant IA DataSentinel"
+          aria-label="Ouvrir l'assistant IA"
+        >
+          {/* Cercles d'animation de pulsation */}
+          <span className="absolute inset-0 rounded-full bg-[#1A73E8] opacity-20 animate-ping" />
+          <span className="absolute inset-0 rounded-full bg-[#1A73E8] opacity-10 animate-ping" style={{ animationDelay: '0.5s' }} />
+          
+          {/* Bouton principal */}
+          <span className="relative flex items-center justify-center w-14 h-14 rounded-full bg-[#1A73E8] shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-200">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a8 8 0 0 1 8 8c0 5.25-8 13-8 13S4 15.25 4 10a8 8 0 0 1 8-8z" />
+              <circle cx="12" cy="10" r="3" fill="white" stroke="none" />
+            </svg>
+          </span>
+
+          {/* Tooltip */}
+          <span className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-[#202124] text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
+            Assistant IA DataSentinel
+          </span>
+        </button>
+      )}
+
+      {/* Overlay plein écran (mode discussion Claude/ChatGPT) */}
+      {isExpanded && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 bg-[#202124]/60 backdrop-blur-sm">
+          {/* Clic en dehors = fermer */}
+          <div className="absolute inset-0" onClick={() => setIsExpanded(false)} />
+          
+          {/* Fenêtre de discussion */}
+          <div
+            className="relative w-full max-w-3xl h-[88vh] bg-white rounded-2xl border border-[#DADCE0] flex flex-col overflow-hidden"
+            style={{
+              boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+              animation: 'chatFadeIn 0.2s ease-out'
+            }}
+          >
+            {renderChatContent()}
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes chatFadeIn {
+          from { opacity: 0; transform: scale(0.96) translateY(10px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+      `}</style>
+    </>
   )
 }
 
