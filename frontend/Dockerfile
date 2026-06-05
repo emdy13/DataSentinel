@@ -6,8 +6,9 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# Étape 2 : Service des fichiers statiques avec Nginx
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Étape 2 : Service des fichiers statiques avec Caddy
+FROM caddy:alpine
+COPY --from=build /app/dist /usr/share/caddy
+COPY Caddyfile /etc/caddy/Caddyfile
+EXPOSE 80 443
+

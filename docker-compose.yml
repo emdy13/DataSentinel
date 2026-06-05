@@ -21,7 +21,7 @@ services:
       retries: 3
 
   # ================================
-  # Frontend React/Vite via Nginx (port 80)
+  # Frontend React/Vite via Caddy (ports 80 & 443)
   # ================================
   frontend:
     build:
@@ -30,6 +30,15 @@ services:
     container_name: datasentinel-frontend
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
     depends_on:
       - backend
     restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
+

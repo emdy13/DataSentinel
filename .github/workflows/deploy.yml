@@ -32,7 +32,7 @@ jobs:
             # Aller dans le répertoire du projet (créé au premier déploiement)
             if [ ! -d "/home/ubuntu/datasentinel" ]; then
               echo "⬇️  Premier déploiement : clonage du dépôt..."
-              git clone git@github.com:emdy13/DataSentinel.git /home/ubuntu/datasentinel
+              git clone https://github.com/emdy13/DataSentinel.git /home/ubuntu/datasentinel
             fi
 
             cd /home/ubuntu/datasentinel
@@ -52,5 +52,6 @@ jobs:
             docker image prune -af
 
             echo "✅ Déploiement terminé avec succès !"
-            echo "   Frontend  → http://${{ secrets.EC2_HOST }}"
+            echo "   Frontend  → https://datasentinel.duckdns.org"
             echo "   Backend   → http://${{ secrets.EC2_HOST }}:8081"
+
