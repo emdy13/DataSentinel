@@ -1,0 +1,30 @@
+# ==========================
+# Frontend
+# ==========================
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# ==========================
+# Backend
+# ==========================
+backend/target/
+backend/.env
+*.jar
+*.class
+
+# ==========================
+# Docker
+# ==========================
+.docker/
+
+# ==========================
+# Système
+# ==========================
+.DS_Store
+*.log
+*.swp
+.idea/
+*.iml
+.vscode/

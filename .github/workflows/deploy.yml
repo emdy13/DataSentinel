@@ -1,0 +1,56 @@
+name: Deploy DataSentinel to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Build & Deploy on EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Récupération du code source
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Connexion SSH à l'EC2 et déploiement
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            echo "=================================="
+            echo "  DataSentinel — Déploiement CI  "
+            echo "=================================="
+
+            # Aller dans le répertoire du projet (créé au premier déploiement)
+            if [ ! -d "/home/ubuntu/datasentinel" ]; then
+              echo "⬇️  Premier déploiement : clonage du dépôt..."
+              git clone git@github.com:emdy13/DataSentinel.git /home/ubuntu/datasentinel
+            fi
+
+            cd /home/ubuntu/datasentinel
+
+            echo "🔄 Mise à jour du code (pull)..."
+            git fetch origin
+            git checkout main
+            git pull origin main
+
+            echo "🐳 Arrêt des conteneurs existants..."
+            docker-compose down --remove-orphans || true
+
+            echo "🏗️  Build et démarrage des conteneurs..."
+            docker-compose up --build -d
+
+            echo "🧹 Nettoyage des images inutilisées..."
+            docker image prune -af
+
+            echo "✅ Déploiement terminé avec succès !"
+            echo "   Frontend  → http://${{ secrets.EC2_HOST }}"
+            echo "   Backend   → http://${{ secrets.EC2_HOST }}:8081"

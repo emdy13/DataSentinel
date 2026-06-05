@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # ================================
+  # Backend Spring Boot (port 8081)
+  # ================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: datasentinel-backend
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/h2-console"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ================================
+  # Frontend React/Vite via Nginx (port 80)
+  # ================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: datasentinel-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
