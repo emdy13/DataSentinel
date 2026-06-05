@@ -30,4 +30,8 @@ backend/.env
 .vscode/
 dist/
 .vite/
+.env
+.env.local
+.env.*
+
 

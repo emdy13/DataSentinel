@@ -55,7 +55,7 @@ export default function AIAssistant({ triggerMessage }) {
     }
   }, [triggerMessage])
 
-  function sendMessage(text) {
+  async function sendMessage(text) {
     if (!text.trim() || thinking) return
     const userMsg = {
       id: Date.now(),
@@ -66,7 +66,60 @@ export default function AIAssistant({ triggerMessage }) {
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setThinking(true)
-    setTimeout(() => {
+
+    try {
+      const systemPrompt = `Tu es l'assistant IA officiel de DataSentinel, une plateforme professionnelle sénégalaise de protection des données et de cybersécurité. 
+Tu aides les auditeurs et le jury académique à comprendre les risques de sécurité et d'exposition des PII (Données d'Identification Personnelles) au Sénégal.
+Directives importantes :
+- Sois concis, direct et réponds toujours en français.
+- Réfère-toi souvent à la loi sénégalaise n° 2008-12 sur la protection des données personnelles, à la CDP (Commission de protection des Données Personnelles du Sénégal).
+- Cite les risques et ressources de l'application : le fichier critique 'base_clients_2024.csv' (1 240 emails, numéros de cartes, numéros Wave/Orange Money non masqués), la vulnérabilité CVE-2023-32243 sur WordPress 6.2 (score CVSS 9.8), et l'historique d'audit stocké en base H2.
+- Utilise des puces et du gras pour structurer tes recommandations.`;
+
+      const apiMessages = [
+        { role: 'system', content: systemPrompt },
+        ...messages.map(m => ({
+          role: m.role === 'user' ? 'user' : 'assistant',
+          content: m.text
+        })),
+        { role: 'user', content: text.trim() }
+      ];
+
+      const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+      if (!apiKey) {
+        throw new Error('Clé API Groq non configurée');
+      }
+
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          messages: apiMessages,
+          temperature: 0.7,
+          max_tokens: 500
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur API Groq');
+      }
+
+      const data = await response.json();
+      const aiText = data.choices[0].message.content;
+
+      const aiMsg = {
+        id: Date.now() + 1,
+        role: 'ai',
+        text: aiText,
+        time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      }
+      setMessages(prev => [...prev, aiMsg])
+    } catch (error) {
+      console.warn('Fallback sur les réponses simulées de DataSentinel suite à une erreur :', error);
       const aiMsg = {
         id: Date.now() + 1,
         role: 'ai',
@@ -74,8 +127,9 @@ export default function AIAssistant({ triggerMessage }) {
         time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       }
       setMessages(prev => [...prev, aiMsg])
+    } finally {
       setThinking(false)
-    }, 800)
+    }
   }
 
   return (

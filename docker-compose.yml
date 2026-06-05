@@ -27,6 +27,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - VITE_GROQ_API_KEY=${VITE_GROQ_API_KEY}
     container_name: datasentinel-frontend
     ports:
       - "80:80"
