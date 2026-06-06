@@ -116,10 +116,36 @@ export default function PhishingSimulator({ docs }) {
   const [generatedEmail, setGeneratedEmail] = useState(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [showRiskNote, setShowRiskNote] = useState(false)
-  const [victimIndex, setVictimIndex] = useState(0)
+
+  // États pour le test de simulation interactif
+  const [selectedTargetEmail, setSelectedTargetEmail] = useState('')
+  const [simulationStatus, setSimulationStatus] = useState(null) // 'idle' | 'sending' | 'sent' | 'clicked'
+  const [simulationLogs, setSimulationLogs] = useState([])
+
+  // Consolider toutes les adresses email détectées dans les documents pour le choix de cible
+  const getAllUniqueEmails = () => {
+    const allEmails = []
+    docs.forEach(doc => {
+      if (doc.uniqueEmails) {
+        doc.uniqueEmails.forEach(email => {
+          if (!allEmails.includes(email)) {
+            allEmails.push(email)
+          }
+        })
+      }
+    })
+    return allEmails.length > 0 ? allEmails : ['directeur@datasentinel.sn', 'admin@datasentinel.sn', 'contact@datasentinel.sn']
+  }
+
+  const detectedEmails = getAllUniqueEmails()
+
+  // Mettre à jour l'email cible sélectionné par défaut
+  if (!selectedTargetEmail && detectedEmails.length > 0) {
+    setSelectedTargetEmail(detectedEmails[0])
+  }
 
   // Consolider toutes les données PII extraites des documents
-  const buildVictimProfile = () => {
+  const buildVictimProfile = (targetEmail) => {
     const allEmails = []
     let totalBanking = 0, totalWave = 0, totalIdentity = 0, totalNinea = 0
     let sampleCNI = '1 19840512 12345 67', sampleNINEA = 'SN-2019-B12345'
@@ -134,9 +160,9 @@ export default function PhishingSimulator({ docs }) {
       if (doc.detectedFields.banking > 0) sampleFile = doc.name
     })
 
-    const pickedEmail = allEmails[victimIndex % Math.max(allEmails.length, 1)]
-    const email = pickedEmail?.email || 'client@example.sn'
-    const emailFile = pickedEmail?.file || 'base_clients_2024.csv'
+    const email = targetEmail || (allEmails.length > 0 ? allEmails[0].email : 'client@example.sn')
+    const pickedEmail = allEmails.find(item => item.email === email)
+    const emailFile = pickedEmail?.file || sampleFile
 
     // Dériver nom/prénom depuis l'email
     const parts = email.split('@')[0].replace(/[._]/g, ' ').split(' ')
@@ -149,7 +175,7 @@ export default function PhishingSimulator({ docs }) {
       cni: sampleCNI,
       ninea: sampleNINEA,
       sourceFile: emailFile,
-      totalEmails: allEmails.length,
+      totalEmails: allEmails.length || 3,
       banking: totalBanking,
       waveMoney: totalWave,
       identity: totalIdentity,
@@ -162,23 +188,71 @@ export default function PhishingSimulator({ docs }) {
     setIsGenerating(true)
     setGeneratedEmail(null)
     setShowRiskNote(false)
+    setSimulationStatus(null)
 
     setTimeout(() => {
-      const victim = buildVictimProfile()
+      const victim = buildVictimProfile(selectedTargetEmail)
       const company = 'DataSentinel SA'
       const email = selectedTemplate.generate(victim, company)
       setGeneratedEmail(email)
       setIsGenerating(false)
-    }, 1200)
+      setSimulationStatus('idle')
+      setSimulationLogs([])
+    }, 1000)
+  }
+
+  // Démarrer la simulation d'envoi et de click tracking
+  const handleLaunchSimulation = () => {
+    if (!generatedEmail) return
+    setSimulationStatus('sending')
+    setSimulationLogs([
+      { time: 'À l\'instant', type: 'info', message: 'Préparation du serveur de messagerie fictif...' },
+      { time: 'À l\'instant', type: 'info', message: `Construction de l'email ciblé pour ${selectedTargetEmail}...` }
+    ])
+
+    // Étape 1 : Email Envoyé
+    setTimeout(() => {
+      setSimulationStatus('sent')
+      setSimulationLogs(prev => [
+        ...prev,
+        { time: '+1s', type: 'success', message: `Email délivré avec succès à ${selectedTargetEmail}.` },
+        { time: '+1s', type: 'warning', message: 'Attente d\'une interaction de la cible...' }
+      ])
+
+      // Étape 2 : Simulation de clic (toujours simuler un clic pour montrer le résultat de l'hameçonnage)
+      setTimeout(() => {
+        setSimulationStatus('clicked')
+        setSimulationLogs(prev => [
+          ...prev,
+          { time: '+3s', type: 'critical', message: `🚨 ALERTE : La cible ${selectedTargetEmail} a cliqué sur le lien d'hameçonnage !` },
+          { time: '+3s', type: 'critical', message: '⚠️ Risque d\'exfiltration de données ou d\'installation de malware.' }
+        ])
+      }, 3000)
+
+    }, 1500)
   }
 
   const handleRotateVictim = () => {
-    const allEmails = []
-    docs.forEach(doc => {
-      if (doc.uniqueEmails) allEmails.push(...doc.uniqueEmails)
-    })
-    setVictimIndex(prev => (prev + 1) % Math.max(allEmails.length, 1))
-    if (selectedTemplate) handleGenerate()
+    const allEmails = getAllUniqueEmails()
+    const nextIdx = (allEmails.indexOf(selectedTargetEmail) + 1) % allEmails.length
+    const nextEmail = allEmails[nextIdx]
+    setSelectedTargetEmail(nextEmail)
+    setSimulationStatus(null)
+    
+    if (selectedTemplate) {
+      setIsGenerating(true)
+      setGeneratedEmail(null)
+      setShowRiskNote(false)
+      setTimeout(() => {
+        const victim = buildVictimProfile(nextEmail)
+        const company = 'DataSentinel SA'
+        const email = selectedTemplate.generate(victim, company)
+        setGeneratedEmail(email)
+        setIsGenerating(false)
+        setSimulationStatus('idle')
+        setSimulationLogs([])
+      }, 1000)
+    }
   }
 
   const aggregated = {
@@ -234,19 +308,44 @@ export default function PhishingSimulator({ docs }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Template Selection */}
+        {/* Template & Target Selection */}
         <div className="bg-white border border-[#DADCE0] rounded-xl p-6 shadow-sm space-y-4">
-          <h2 className="text-sm font-semibold text-[#202124] flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-[#202124] flex items-center gap-2 border-b border-[#F1F3F4] pb-2">
             <Mail size={16} className="text-[#1A73E8]" />
-            Choisir le vecteur d'attaque
+            Configurer la simulation
           </h2>
-          <p className="text-xs text-[#5F6368]">
-            Chaque vecteur est basé sur un type de donnée PII détecté dans vos fichiers.
-          </p>
+
+          {/* Target selection dropdown */}
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-[#202124]">
+              Sélectionner la cible (Collaborateur concerné) :
+            </label>
+            <select
+              value={selectedTargetEmail}
+              onChange={(e) => {
+                setSelectedTargetEmail(e.target.value)
+                setSimulationStatus(null)
+              }}
+              className="w-full text-xs px-3 py-2 border border-[#DADCE0] rounded-lg bg-white text-[#202124] font-mono focus:border-[#1A73E8] focus:outline-none"
+            >
+              {detectedEmails.map(email => (
+                <option key={email} value={email}>{email}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-[#202124]">
+              Choisir le vecteur d'attaque :
+            </label>
+            <p className="text-[11px] text-[#5F6368]">
+              Chaque vecteur est basé sur un type de donnée PII détecté dans vos fichiers.
+            </p>
+          </div>
 
           <div className="space-y-2">
             {PHISHING_TEMPLATES.map(tpl => {
-              const available = tpl.requires.some(req => aggregated[req] > 0)
+              const available = docs.length === 0 || tpl.requires.some(req => aggregated[req] > 0)
               const isSelected = selectedTemplate?.id === tpl.id
               return (
                 <button
@@ -281,7 +380,7 @@ export default function PhishingSimulator({ docs }) {
             <button
               onClick={handleGenerate}
               disabled={!selectedTemplate || isGenerating}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#D93025] hover:bg-[#A50E0E] disabled:bg-slate-300 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#1A73E8] hover:bg-[#1557B0] disabled:bg-slate-300 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
             >
               {isGenerating ? (
                 <>
@@ -297,71 +396,139 @@ export default function PhishingSimulator({ docs }) {
             </button>
             <button
               onClick={handleRotateVictim}
-              disabled={!generatedEmail}
-              title="Changer de victime"
-              className="px-3 py-2.5 border border-[#DADCE0] hover:bg-[#F1F3F4] disabled:opacity-40 text-[#5F6368] rounded-lg transition-colors"
+              title="Cible suivante"
+              className="px-3 py-2.5 border border-[#DADCE0] hover:bg-[#F1F3F4] text-[#5F6368] rounded-lg transition-colors"
             >
               <RefreshCw size={14} />
             </button>
           </div>
         </div>
 
-        {/* Generated Email Preview */}
-        <div className="bg-white border border-[#DADCE0] rounded-xl shadow-sm overflow-hidden">
-          <div className="flex items-center gap-2 px-6 py-4 border-b border-[#DADCE0] bg-[#F8FAFF]">
-            <Eye size={15} className="text-[#5F6368]" />
-            <h2 className="text-sm font-semibold text-[#202124]">Aperçu de l'email généré</h2>
+        {/* Generated Email Preview & Click Simulation */}
+        <div className="space-y-6">
+          <div className="bg-white border border-[#DADCE0] rounded-xl shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-6 py-4 border-b border-[#DADCE0] bg-[#F8FAFF]">
+              <Eye size={15} className="text-[#5F6368]" />
+              <h2 className="text-sm font-semibold text-[#202124]">Aperçu de l'email généré</h2>
+            </div>
+
+            {!generatedEmail && !isGenerating && (
+              <div className="flex flex-col items-center justify-center h-64 text-center px-6">
+                <Mail size={32} className="text-[#DADCE0] mb-3" />
+                <p className="text-sm text-[#9AA0A6]">
+                  Sélectionnez une cible et un vecteur d'attaque puis cliquez sur "Générer".
+                </p>
+              </div>
+            )}
+
+            {isGenerating && (
+              <div className="flex flex-col items-center justify-center h-64 gap-3">
+                <RefreshCw size={24} className="text-[#1A73E8] animate-spin" />
+                <p className="text-sm text-[#5F6368]">Analyse des PII en cours...</p>
+              </div>
+            )}
+
+            {generatedEmail && !isGenerating && (
+              <div className="p-5 space-y-4 overflow-y-auto max-h-[480px]">
+                {/* Email headers */}
+                <div className="space-y-1.5 text-xs border-b border-[#F1F3F4] pb-4">
+                  <div className="flex gap-2">
+                    <span className="text-[#5F6368] w-16 flex-shrink-0 font-medium">De :</span>
+                    <span className="text-[#D93025] font-mono break-all">{generatedEmail.from}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-[#5F6368] w-16 flex-shrink-0 font-medium">Objet :</span>
+                    <span className="font-semibold text-[#202124]">{generatedEmail.subject}</span>
+                  </div>
+                </div>
+
+                {/* Email body */}
+                <pre className="text-xs text-[#202124] leading-relaxed whitespace-pre-wrap font-sans bg-[#F8FAFF] rounded-lg p-4 border border-[#DADCE0]">
+                  {generatedEmail.body}
+                </pre>
+
+                {/* Risk note toggle */}
+                <button
+                  onClick={() => setShowRiskNote(v => !v)}
+                  className="w-full flex items-center justify-between px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-xs font-semibold text-red-700 hover:bg-red-100 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <AlertTriangle size={13} />
+                    Pourquoi cet email est dangereux
+                  </span>
+                  {showRiskNote ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                </button>
+                {showRiskNote && (
+                  <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-800 leading-relaxed">
+                    {generatedEmail.riskNote}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {!generatedEmail && !isGenerating && (
-            <div className="flex flex-col items-center justify-center h-64 text-center px-6">
-              <Mail size={32} className="text-[#DADCE0] mb-3" />
-              <p className="text-sm text-[#9AA0A6]">
-                Sélectionnez un vecteur d'attaque et cliquez sur "Générer" pour voir un exemple d'email de phishing construit à partir de vos données.
-              </p>
-            </div>
-          )}
-
-          {isGenerating && (
-            <div className="flex flex-col items-center justify-center h-64 gap-3">
-              <RefreshCw size={24} className="text-[#1A73E8] animate-spin" />
-              <p className="text-sm text-[#5F6368]">Analyse des PII en cours...</p>
-            </div>
-          )}
-
+          {/* Interactive Simulation Dashboard (Frontend mock) */}
           {generatedEmail && !isGenerating && (
-            <div className="p-5 space-y-4 overflow-y-auto max-h-[480px]">
-              {/* Email headers */}
-              <div className="space-y-1.5 text-xs border-b border-[#F1F3F4] pb-4">
-                <div className="flex gap-2">
-                  <span className="text-[#5F6368] w-16 flex-shrink-0 font-medium">De :</span>
-                  <span className="text-[#D93025] font-mono break-all">{generatedEmail.from}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="text-[#5F6368] w-16 flex-shrink-0 font-medium">Objet :</span>
-                  <span className="font-semibold text-[#202124]">{generatedEmail.subject}</span>
-                </div>
+            <div className="bg-white border border-[#DADCE0] rounded-xl p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-[#F1F3F4] pb-2">
+                <h3 className="text-sm font-semibold text-[#202124]">Simulation d'envoi & comportement cible</h3>
+                {simulationStatus === 'idle' && (
+                  <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">En attente</span>
+                )}
+                {simulationStatus === 'sending' && (
+                  <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-medium animate-pulse">Envoi en cours...</span>
+                )}
+                {simulationStatus === 'sent' && (
+                  <span className="text-xs px-2 py-0.5 rounded bg-orange-100 text-orange-800 font-medium">Livré (Attente clic)</span>
+                )}
+                {simulationStatus === 'clicked' && (
+                  <span className="text-xs px-2 py-0.5 rounded bg-red-100 text-red-800 font-bold">Lien Cliqué 🚨</span>
+                )}
               </div>
 
-              {/* Email body */}
-              <pre className="text-xs text-[#202124] leading-relaxed whitespace-pre-wrap font-sans bg-[#F8FAFF] rounded-lg p-4 border border-[#DADCE0]">
-                {generatedEmail.body}
-              </pre>
+              {simulationStatus === 'idle' ? (
+                <div className="text-center py-4 space-y-2">
+                  <p className="text-xs text-[#5F6368]">
+                    Prêt à lancer un test de comportement fictif pour évaluer la vulnérabilité de la cible face à cet email.
+                  </p>
+                  <button
+                    onClick={handleLaunchSimulation}
+                    className="px-4 py-2 bg-[#D93025] hover:bg-[#A50E0E] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
+                  >
+                    Lancer le test de simulation
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 font-mono text-[11px] space-y-2 max-h-40 overflow-y-auto">
+                    {simulationLogs.map((log, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <span className="text-[#70757a]">{log.time}</span>
+                        <span className={
+                          log.type === 'success' ? 'text-emerald-700' :
+                          log.type === 'warning' ? 'text-orange-700' :
+                          log.type === 'critical' ? 'text-red-700 font-bold' : 'text-slate-700'
+                        }>
+                          {log.message}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
 
-              {/* Risk note toggle */}
-              <button
-                onClick={() => setShowRiskNote(v => !v)}
-                className="w-full flex items-center justify-between px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-xs font-semibold text-red-700 hover:bg-red-100 transition-colors"
-              >
-                <span className="flex items-center gap-2">
-                  <AlertTriangle size={13} />
-                  Pourquoi cet email est dangereux
-                </span>
-                {showRiskNote ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-              </button>
-              {showRiskNote && (
-                <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-800 leading-relaxed">
-                  {generatedEmail.riskNote}
+                  {simulationStatus === 'clicked' && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-xs text-red-800 space-y-2">
+                      <div className="font-bold flex items-center gap-1.5">
+                        <AlertTriangle size={14} className="text-red-700" />
+                        Rapport du test de vulnérabilité
+                      </div>
+                      <p>
+                        La cible <strong>{selectedTargetEmail}</strong> a cliqué sur le lien piégé après un court délai de réflexion. Dans une attaque réelle, cela se traduirait par l'ouverture d'un formulaire d'authentification falsifié ou le téléchargement d'un payload malveillant.
+                      </p>
+                      <div className="font-medium pt-1">
+                        💡 Recommandation : Planifier une session de sensibilisation ciblée pour ce collaborateur.
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
