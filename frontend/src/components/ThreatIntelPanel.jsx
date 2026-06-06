@@ -279,33 +279,33 @@ export default function ThreatIntelPanel({
       {/* DARK WEB MONITORING TAB */}
       {subTab === 'darkweb' && (
         <div className="space-y-6">
-          <div className="card bg-[#0F172A] border border-slate-700 text-slate-100 rounded-xl p-6 shadow-md">
-            <div className="flex items-center gap-2 mb-4 border-b border-slate-700 pb-3">
-              <Globe size={18} className="text-[#38BDF8]" />
-              <h2 className="text-sm font-semibold">Console de Surveillance Passive du Dark Web</h2>
+          <div className="card bg-white border border-[#DADCE0] rounded-xl p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4 border-b border-[#F1F3F4] pb-3">
+              <Globe size={18} className="text-[#1A73E8]" />
+              <h2 className="text-sm font-semibold text-[#202124]">Console de Surveillance Passive du Dark Web</h2>
             </div>
-            <p className="text-xs text-slate-300 mb-6">
-              Recherche automatisée de fuites et mentions de votre domaine <span className="font-semibold text-slate-100">datasentinel.sn</span> sur les salons IRC underground, les chats Telegram malveillants et les forums Tor.
+            <p className="text-xs text-[#5F6368] mb-6">
+              Recherche automatisée de fuites et mentions de votre domaine <span className="font-semibold text-[#202124]">datasentinel.sn</span> sur les salons IRC underground, les chats Telegram malveillants et les forums Tor.
             </p>
 
             <div className="space-y-4">
               {MOCK_DARK_WEB_ALERTS.map((alert) => (
-                <div key={alert.id} className="border border-slate-800 bg-slate-900 rounded-lg p-4 flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div key={alert.id} className="border border-[#DADCE0] bg-[#F8FAFF] hover:border-[#1A73E8] rounded-lg p-4 flex flex-col md:flex-row md:items-start justify-between gap-4 transition-all">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-red-900/50 text-red-400 border border-red-800">
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 font-medium">
                         {alert.type}
                       </span>
-                      <span className="text-xs text-slate-400">Détecté sur : {alert.source}</span>
-                      <span className="text-xs text-slate-500">Date : {alert.leakDate}</span>
+                      <span className="text-xs text-[#5F6368]">Détecté sur : {alert.source}</span>
+                      <span className="text-xs text-[#70757a]">Date : {alert.leakDate}</span>
                     </div>
-                    <p className="text-sm text-slate-200">{alert.description}</p>
+                    <p className="text-sm text-[#202124]">{alert.description}</p>
                   </div>
                   <div className="flex-shrink-0">
-                    <span className={`text-xs px-2.5 py-1 rounded font-semibold ${
-                      alert.dangerLevel === 'critical' ? 'bg-red-500 text-white' : 'bg-amber-500 text-slate-950'
+                    <span className={`text-xs px-2.5 py-1 rounded font-bold uppercase ${
+                      alert.dangerLevel === 'critical' ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-orange-100 text-orange-800 border border-orange-200'
                     }`}>
-                      {alert.dangerLevel.toUpperCase()}
+                      {alert.dangerLevel}
                     </span>
                   </div>
                 </div>
@@ -436,13 +436,6 @@ export default function ThreatIntelPanel({
                           CVSS {cve.cvss}
                         </span>
                       </div>
-                      <button
-                        onClick={() => onPatchCVE(cve.id, cve.tech, cve.remediation)}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-[#1E8E3E] hover:bg-[#146c2e] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
-                      >
-                        <Check size={12} />
-                        Patcher
-                      </button>
                     </div>
                   </div>
                 ))}

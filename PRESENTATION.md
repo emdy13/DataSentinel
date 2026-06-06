@@ -33,7 +33,7 @@ Elle permet à une organisation d'auditer son niveau de conformité, d'identifie
 ### 3. La Vision à 360° de la Sécurité
 Expliquez que la cybersécurité ne se résume pas à l'analyse de fichiers, mais inclut :
 *   **Menaces Internes :** Exposition accidentelle de fichiers sensibles par les employés.
-*   **Menaces Externes (Threat Intel) :** Détection automatique des CVE applicatives sur la stack technique (avec possibilité de patcher) et surveillance active des fuites de données de l'entreprise sur le **Dark Web**.
+*   **Menaces Externes (Threat Intel) :** Détection automatique des CVE applicatives sur la stack technique et surveillance active des fuites de données de l'entreprise sur le **Dark Web**.
 *   **Facteur Humain :** Un **simulateur de phishing** intégré pour tester et sensibiliser les équipes.
 
 ### 4. L'Assistant Cyber IA Intégrée

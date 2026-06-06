@@ -36,7 +36,7 @@ export default function AlertItem({ alert, onResolve, resolved }) {
         >
           {resolved ? 'Résolu' : labels[alert.severity]}
         </span>
-        {!resolved && onResolve && (
+        {!resolved && onResolve && alert.type !== 'cve' && (
           <button
             onClick={() => onResolve(alert.id)}
             className="text-xs px-2.5 py-1 font-semibold border border-[#1A73E8] text-[#1A73E8] rounded hover:bg-[#E8F0FE] transition-colors"
