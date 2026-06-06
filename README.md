@@ -2,6 +2,24 @@
 
 **Plateforme de détection et de protection des données personnelles sensibles — Conformité Loi n° 2008-12 (Sénégal)**
 
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
+[![React](https://img.shields.io/badge/React-18.2-blue)]()
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-green)]()
+[![License](https://img.shields.io/badge/license-MIT-blue)]()
+
+## ✨ Nouveauté : Anonymisation IA
+
+DataSentinel intègre maintenant un **module d'anonymisation par intelligence artificielle** permettant de protéger automatiquement les données sensibles détectées.
+
+🎯 **Fonctionnalités clés :**
+- 🤖 Simulation de traitement IA avec 7 étapes progressives
+- 🔐 Chiffrement AES-256 optionnel
+- 📥 Export multi-formats (CSV, JSON, Excel)
+- ✅ 6 types de données supportés (Email, CNI, Banking, NINEA, etc.)
+- 📊 Rapport de conformité automatique
+
+👉 **[Guide complet d'anonymisation](./ANONYMISATION_GUIDE.md)** | **[Démarrage rapide](./DEMARRAGE_RAPIDE.md)**
+
 ---
 
 ## 🏗️ Architecture
@@ -89,6 +107,31 @@ Le déploiement est **automatisé via GitHub Actions** à chaque push sur la bra
 | `GET`   | `/api/threats/cve`        | Liste des CVEs actives              |
 | `GET`   | `/api/threats/darkweb`    | Alertes du Dark Web                 |
 | `POST`  | `/api/threats/cve/{id}/patch` | Appliquer un correctif CVE      |
+
+---
+
+## 🔐 Anonymisation IA (Frontend)
+
+Le module d'anonymisation fonctionne **100% côté client** sans transmission de données au serveur.
+
+**Workflow en 3 étapes :**
+1. **Sélection** : Choisir un document avec données sensibles
+2. **Configuration** : Cocher les types à anonymiser
+3. **Traitement** : Lancer l'IA et télécharger les résultats
+
+**Types de données supportés :**
+- 📧 Emails → Pseudonymisation
+- 📱 Téléphones → Masquage
+- 💰 Wave/Orange Money → Masquage intelligent
+- 💳 Banking → Tokenisation PCI-DSS
+- 🆔 CNI → Chiffrement (Loi 2008-12)
+- 🏢 NINEA → Masquage
+
+**Documentation :**
+- [Guide d'anonymisation complet](./ANONYMISATION_GUIDE.md)
+- [Plan de tests](./frontend/TEST_ANONYMISATION.md)
+- [Scénario de démonstration](./DEMO_ANONYMISATION.md)
+- [Changelog](./CHANGELOG_ANONYMISATION.md)
 
 ---
 

@@ -3,6 +3,7 @@ import Navbar from './components/Navbar'
 import Dashboard from './components/Dashboard'
 import FileUpload from './components/FileUpload'
 import SensitiveDataPanel from './components/SensitiveDataPanel'
+import AnonymizationPanel from './components/AnonymizationPanel'
 import ThreatIntelPanel from './components/ThreatIntelPanel'
 import PhishingSimulator from './components/PhishingSimulator'
 import RiskRadar from './components/RiskRadar'
@@ -496,6 +497,8 @@ export default function App() {
         )
       case 'data':
         return <SensitiveDataPanel docs={adjustedDocs} />
+      case 'anonymize':
+        return <AnonymizationPanel docs={adjustedDocs} />
       case 'threat_intel':
         return (
           <ThreatIntelPanel
