@@ -20,8 +20,15 @@ public class ThreatIntelController {
         // Ensemencement des CVEs simulées
         cveDb.add(createCve(1, "WordPress", "6.2", "CVE-2023-32243", "Exécution de Code à Distance (RCE)", 9.8, "critical"));
         cveDb.add(createCve(2, "WordPress", "6.2", "CVE-2023-27635", "Cross-Site Scripting (XSS)", 7.2, "high"));
+        cveDb.add(createCve(6, "WordPress", "6.5", "CVE-2024-4422", "Contournement de la politique de sécurité des contenus (CSP)", 6.1, "medium"));
+        cveDb.add(createCve(7, "WordPress", "6.5", "CVE-2024-5531", "Déni de service XML-RPC", 7.5, "high"));
         cveDb.add(createCve(3, "WooCommerce", "7.4", "CVE-2023-28121", "Contournement d'Authentification", 9.8, "critical"));
+        cveDb.add(createCve(8, "WooCommerce", "8.2", "CVE-2023-6623", "Fuite d'informations sensibles sur les commandes", 5.3, "medium"));
         cveDb.add(createCve(4, "phpMyAdmin", "5.1", "CVE-2022-23808", "Injection SQL", 8.8, "high"));
+        cveDb.add(createCve(9, "phpMyAdmin", "5.2", "CVE-2023-45678", "Cross-Site Scripting (XSS) dans le panneau d'importation", 6.8, "high"));
+        cveDb.add(createCve(5, "Apache HTTP Server", "2.4.49", "CVE-2021-41773", "Traversée de Répertoire & Lecture de Fichiers", 7.5, "high"));
+        cveDb.add(createCve(10, "Apache HTTP Server", "2.4.52", "CVE-2022-22722", "Dépassement de tampon dans la configuration XML", 7.5, "high"));
+        cveDb.add(createCve(11, "Apache HTTP Server", "2.4.52", "CVE-2022-23943", "Exécution de code à distance (RCE) via mod_sed", 9.8, "critical"));
 
         // Ensemencement des alertes du Dark Web
         darkWebAlerts.add(createDarkWebAlert(1, "datasentinel.sn", "BreachForums", "Base de données SQL présumée en vente pour 350$ en Bitcoin.", "critical"));

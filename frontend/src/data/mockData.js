@@ -193,6 +193,28 @@ export const MOCK_CVE_DATABASE = [
     dangerLevel: 'high'
   },
   {
+    id: 6,
+    tech: 'WordPress',
+    version: '6.5',
+    cveCode: 'CVE-2024-4422',
+    title: 'Contournement de la politique de sécurité des contenus (CSP)',
+    description: 'Une vulnérabilité permet à un administrateur malveillant d\'injecter des scripts arbitraires contournant les en-têtes CSP restrictifs.',
+    cvss: 6.1,
+    remediation: 'Mettre à jour vers WordPress version 6.5.4 ou supérieure.',
+    dangerLevel: 'medium'
+  },
+  {
+    id: 7,
+    tech: 'WordPress',
+    version: '6.5',
+    cveCode: 'CVE-2024-5531',
+    title: 'Déni de service XML-RPC',
+    description: 'Permet à des attaquants distants d\'épuiser les ressources CPU de l\'hébergeur en envoyant des requêtes XML-RPC malformées en boucle.',
+    cvss: 7.5,
+    remediation: 'Désactiver XML-RPC ou passer à WordPress 6.6+.',
+    dangerLevel: 'high'
+  },
+  {
     id: 3,
     tech: 'WooCommerce',
     version: '7.4',
@@ -202,6 +224,17 @@ export const MOCK_CVE_DATABASE = [
     cvss: 9.8,
     remediation: 'Mettre à jour l\'extension WooCommerce vers la version 7.4.2 ou supérieure.',
     dangerLevel: 'critical'
+  },
+  {
+    id: 8,
+    tech: 'WooCommerce',
+    version: '8.2',
+    cveCode: 'CVE-2023-6623',
+    title: 'Fuite d\'informations sensibles sur les commandes',
+    description: 'Permet à des utilisateurs non authentifiés de lire les métadonnées de commande via des points de terminaison REST mal configurés.',
+    cvss: 5.3,
+    remediation: 'Mettre à jour WooCommerce vers la version 8.2.2 ou supérieure.',
+    dangerLevel: 'medium'
   },
   {
     id: 4,
@@ -215,6 +248,17 @@ export const MOCK_CVE_DATABASE = [
     dangerLevel: 'high'
   },
   {
+    id: 9,
+    tech: 'phpMyAdmin',
+    version: '5.2',
+    cveCode: 'CVE-2023-45678',
+    title: 'Cross-Site Scripting (XSS) dans le panneau d\'importation',
+    description: 'Permet d\'exécuter du JavaScript arbitraire dans la session de l\'administrateur en chargeant un fichier SQL formaté de manière malveillante.',
+    cvss: 6.8,
+    remediation: 'Mettre à jour phpMyAdmin vers la version 5.2.1 ou supérieure.',
+    dangerLevel: 'high'
+  },
+  {
     id: 5,
     tech: 'Apache HTTP Server',
     version: '2.4.49',
@@ -224,6 +268,28 @@ export const MOCK_CVE_DATABASE = [
     cvss: 7.5,
     remediation: 'Mettre à jour le serveur Apache vers la version 2.4.51 ou supérieure.',
     dangerLevel: 'high'
+  },
+  {
+    id: 10,
+    tech: 'Apache HTTP Server',
+    version: '2.4.52',
+    cveCode: 'CVE-2022-22722',
+    title: 'Dépassement de tampon dans la configuration XML',
+    description: 'Permet à un attaquant distant d\'exécuter du code arbitraire sur le serveur via une requête XML volumineuse et malformée.',
+    cvss: 7.5,
+    remediation: 'Mettre à jour Apache HTTP Server vers la version 2.4.53 ou supérieure.',
+    dangerLevel: 'high'
+  },
+  {
+    id: 11,
+    tech: 'Apache HTTP Server',
+    version: '2.4.52',
+    cveCode: 'CVE-2022-23943',
+    title: 'Exécution de code à distance (RCE) via mod_sed',
+    description: 'Une faille de type out-of-bounds write dans le module mod_sed permet d\'écraser des parties de mémoire et d\'exécuter des commandes.',
+    cvss: 9.8,
+    remediation: 'Désactiver mod_sed ou installer Apache 2.4.53+.',
+    dangerLevel: 'critical'
   }
 ]
 
