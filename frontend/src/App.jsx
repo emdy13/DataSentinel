@@ -514,8 +514,6 @@ export default function App() {
         return <PhishingSimulator docs={adjustedDocs} />
       case 'cdp_report':
         return <CDPReport docs={adjustedDocs} globalScore={globalScore} />
-      case 'timeline':
-        return <Timeline events={timelineEvents} onStartDemoMode={() => setIsDemoOpen(true)} />
       default:
         return (
           <div className="space-y-6">

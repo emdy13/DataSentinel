@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Shield, Bell, LayoutDashboard, FileText, Database, History, ShieldAlert, Crosshair, Radar, Scale, Check, HelpCircle, LogOut, Sparkles } from 'lucide-react'
+import { Shield, Bell, LayoutDashboard, FileText, Database, ShieldAlert, Crosshair, Scale, Check, HelpCircle, LogOut, Sparkles } from 'lucide-react'
 
 /** Barre de navigation principale avec onglets */
 export default function Navbar({ activeTab, setActiveTab, activeAlerts = [], onResolveAlert, onStartDemoMode, user, onLogout }) {
@@ -13,7 +13,6 @@ export default function Navbar({ activeTab, setActiveTab, activeAlerts = [], onR
     { id: 'threat_intel', label: 'Intelligence Menaces',  icon: ShieldAlert },
     { id: 'phishing',     label: 'Spear-Phishing',       icon: Crosshair },
     { id: 'cdp_report',   label: 'Conformité CDP',       icon: Scale },
-    { id: 'timeline',     label: 'Historique / Audit',    icon: History },
   ]
 
   return (
